@@ -2,6 +2,11 @@ library(dplyr)
 library(viridis)
 library(readr)
 
+#install.packages("usethis")
+#usethis::use_git()        # initialize
+#usethis::use_github()     # create/link GitHub repo
+
+
 plotChromMultiple <- function(filenames, 
                               wkDir, 
                               samples, 
