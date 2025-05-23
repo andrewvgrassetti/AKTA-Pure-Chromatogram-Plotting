@@ -7,10 +7,10 @@ library(readr)
 #usethis::use_github()     # create/link GitHub repo
 
 
-plotChromMultiple <- function(filenames, 
-                              wkDir, 
-                              samples, 
-                              plots = c('A280', 'A254'),
+plotChromMultiple <- function(filenames,
+                              wkDir,
+                              samples,
+                              plots = c('UV 1_280', 'UV 2_260'),
                               plotStartEnd = NULL, 
                               plotPostInj = TRUE,
                               axNames = c("Volume (mL)", "mAU", 'Conductivity (mS/cm)'),
@@ -49,6 +49,13 @@ plotChromMultiple <- function(filenames,
   # Color palette for each file
   #--------------------------------------------
   file_colors <- viridis::viridis(length(filenames))
+  
+  # helper to lighten a color by mixing with white
+  lighten_color <- function(col, factor = 0.5) {
+    rgb_col <- col2rgb(col) / 255
+    rgb_new <- rgb_col + (1 - rgb_col) * factor
+    rgb(rgb_new[1], rgb_new[2], rgb_new[3])
+  }
   
   #--------------------------------------------
   # If outputLocation is provided, set up EPS
@@ -178,21 +185,12 @@ plotChromMultiple <- function(filenames,
       plot_data_li <- ad$plot_data_list
       frac_data    <- ad$frac_data
       
-      main_rgb <- col2rgb(col_main)/255
-      lighter_rgb <- (main_rgb + c(1,1,1))/2
-      col_260 <- rgb(lighter_rgb[1], lighter_rgb[2], lighter_rgb[3])
-      
-      lty_280 <- 1 # solid
-      lty_260 <- 3 # dotted (example)
-      
-      # Plot lines
-      if ('UV 1_280' %in% names(plot_data_li)) {
-        pd_280 <- plot_data_li[['UV 1_280']]
-        lines(pd_280$mL, pd_280$data, col = col_main, lwd = 3, lty = lty_280)
-      }
-      if ('UV 2_260' %in% names(plot_data_li)) {
-        pd_260 <- plot_data_li[['UV 2_260']]
-        lines(pd_260$mL, pd_260$data, col = col_260, lwd = 3, lty = lty_260)
+      plot_names <- names(plot_data_li)
+      for (j in seq_along(plot_names)) {
+        pd <- plot_data_li[[plot_names[j]]]
+        col_line <- if (j == 1) col_main else lighten_color(col_main)
+        lty_line <- if (j == 1) 1 else 3
+        lines(pd$mL, pd$data, col = col_line, lwd = 3, lty = lty_line)
       }
       
       # Fractions (if requested)
@@ -248,32 +246,26 @@ plotChromMultiple <- function(filenames,
       axis(1, at = xAxTix, cex.axis = 1)
       axis(2, at = yAxTix, las = 1, cex.axis = 1)
       
-      main_rgb <- col2rgb(col_main)/255
-      lighter_rgb <- (main_rgb + c(1,1,1))/2
-      col_260 <- rgb(lighter_rgb[1], lighter_rgb[2], lighter_rgb[3])
+      plot_names <- names(plot_data_li)
+      line_colors <- sapply(seq_along(plot_names), function(j) {
+        if (j == 1) col_main else lighten_color(col_main)
+      })
+      line_types <- ifelse(seq_along(plot_names) == 1, 1, 3)
       
-      lty_280 <- 1 # solid
-      lty_260 <- 3 # dotted
-      
-      # Plot lines
-      if ('UV 1_280' %in% names(plot_data_li)) {
-        pd_280 <- plot_data_li[['UV 1_280']]
-        lines(pd_280$mL, pd_280$data, col = col_main, lwd = 4, lty = lty_280)
-      }
-      if ('UV 2_260' %in% names(plot_data_li)) {
-        pd_260 <- plot_data_li[['UV 2_260']]
-        lines(pd_260$mL, pd_260$data, col = col_260, lwd = 4, lty = lty_260)
+      for (j in seq_along(plot_names)) {
+        pd <- plot_data_li[[plot_names[j]]]
+        lines(pd$mL, pd$data, col = line_colors[j], lwd = 4, lty = line_types[j])
       }
       
       legend("topright",
-             legend = c("A280", "A260"),
-             col = c(col_main, col_260),
-             lty = c(lty_280, lty_260),
-             lwd = 4,
-             bty = 'n',
-             cex = 1,
-             xpd = NA,
-             inset = c(0, -0.15))
+             legend = plot_names,
+             col    = line_colors,
+             lty    = line_types,
+             lwd    = 4,
+             bty    = 'n',
+             cex    = 1,
+             xpd    = NA,
+             inset   = c(0, -0.15))
       
       # Plot fraction lines
       if (plotFracs && !is.null(frac_data)) {
@@ -303,14 +295,17 @@ plotChromMultiple <- function(filenames,
 
 
 # Example usage (adjust paths and filenames as needed):
-plotChromMultiple(
-  filenames      = c("20250430_HisTrap_HP_2x5mL_AP3497_benz.csv","20250430_HisTrap_HP_2x5mL_AP3497_PEI.csv"),
-  wkDir          = '/Users/andrew.grassetti/Library/CloudStorage/OneDrive-SharedLibraries-AeraTherapeutics/Protein Sciences - Documents/Protein Sciences Lab/Protein Sciences Instruments/AKTA_Pure_Systems/AKTA5/Andrew/Chromatogram_CSVs/20250502/',
-  samples        = c("No PEI","PEI"),
-  plots          = c('UV 1_280', 'UV 2_260'),
-  plotStartEnd   = c(0, 1200),
-  plotFracs      = FALSE,
-  rotateFracs    = TRUE,
-  plotPostInj    = FALSE
-  # outputLocation = "..."
-)
+if (FALSE) {
+  plotChromMultiple(
+    filenames      = c("20250430_HisTrap_HP_2x5mL_AP3497_benz.csv",
+                       "20250430_HisTrap_HP_2x5mL_AP3497_PEI.csv"),
+    wkDir          = '/Users/andrew.grassetti/Library/CloudStorage/OneDrive-SharedLibraries-AeraTherapeutics/Protein Sciences - Documents/Protein Sciences Lab/Protein Sciences Instruments/AKTA_Pure_Systems/AKTA5/Andrew/Chromatogram_CSVs/20250502/',
+    samples        = c("No PEI","PEI"),
+    plots          = c('UV 1_280', 'UV 2_260'),
+    plotStartEnd   = c(0, 1200),
+    plotFracs      = FALSE,
+    rotateFracs    = TRUE,
+    plotPostInj    = FALSE
+    # outputLocation = "..."
+  )
+}
