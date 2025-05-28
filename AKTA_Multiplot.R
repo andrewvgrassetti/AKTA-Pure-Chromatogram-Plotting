@@ -7,12 +7,13 @@ library(readr)
 #usethis::use_github()     # create/link GitHub repo
 
 
-plotChromMultiple <- function(filenames, 
-                              wkDir, 
-                              samples, 
+plotChromMultiple <- function(filenames,
+                              wkDir,
+                              samples,
                               plots = c('A280', 'A254'),
-                              plotStartEnd = NULL, 
+                              plotStartEnd = NULL,
                               plotPostInj = TRUE,
+                              logEvent = NULL,
                               axNames = c("Volume (mL)", "mAU", 'Conductivity (mS/cm)'),
                               plotFracs = FALSE,
                               rotateFracs = FALSE,
@@ -91,12 +92,40 @@ plotChromMultiple <- function(filenames,
         }
       }
     }
+
+    #--------------------------------------------
+    # Determine event filter start if requested
+    #--------------------------------------------
+    eventStart <- NULL
+    if (!is.null(logEvent)) {
+      log_df <- get_column_data(df_old, 'logbook',
+                                subtract_start = plotPostInj,
+                                subsetStart    = subsetStart,
+                                data_is_numeric = FALSE)
+      if (is.null(log_df)) {
+        warning('logbook column not found; ignoring logEvent')
+      } else {
+        match_idx <- which(trimws(log_df$data) == logEvent)
+        if (length(match_idx) == 0) {
+          avail <- unique(log_df$data[!is.na(log_df$data) & log_df$data != ''])
+          stop(paste0("Event '", logEvent, "' not found. Available events: ",
+                      paste(avail, collapse = ', ')))
+        }
+        eventStart <- log_df$mL[match_idx[1]]
+      }
+    }
     
     # Extract the data for the specified plots
     plot_data_list <- list()
     for (plot_name in plots) {
-      plot_data <- get_column_data(df_old, plot_name, subtract_start = plotPostInj, subsetStart = subsetStart)
+      plot_data <- get_column_data(df_old,
+                                   plot_name,
+                                   subtract_start = plotPostInj,
+                                   subsetStart    = subsetStart)
       if (!is.null(plot_data)) {
+        if (!is.null(eventStart)) {
+          plot_data <- plot_data[plot_data$mL >= eventStart, ]
+        }
         plot_data_list[[plot_name]] <- plot_data
       }
     }
@@ -108,6 +137,9 @@ plotChromMultiple <- function(filenames,
                                    subtract_start = plotPostInj,
                                    subsetStart    = subsetStart,
                                    data_is_numeric = FALSE)
+      if (!is.null(eventStart) && !is.null(frac_data)) {
+        frac_data <- frac_data[frac_data$mL >= eventStart, ]
+      }
     }
     
     # Determine local start/end
@@ -311,6 +343,7 @@ plotChromMultiple(
   plotStartEnd   = c(0, 1200),
   plotFracs      = FALSE,
   rotateFracs    = TRUE,
-  plotPostInj    = FALSE
+  plotPostInj    = FALSE,
+  logEvent       = 'Sample Application'
   # outputLocation = "..."
 )
