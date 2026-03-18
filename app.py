@@ -14,7 +14,7 @@ from plotting import (
     get_viridis_colors,
     create_overlay_plot,
     create_individual_plots,
-    _normalize_data,
+    normalize_data,
 )
 
 st.set_page_config(
@@ -134,7 +134,7 @@ for idx, f in enumerate(uploaded_files):
         )
 
     # Normalize (shift baseline to zero)
-    plot_data, max_y = _normalize_data(plot_data, min_x, max_x)
+    plot_data, max_y = normalize_data(plot_data, min_x, max_x)
 
     all_sample_data.append({
         "sample": sample_names[idx],

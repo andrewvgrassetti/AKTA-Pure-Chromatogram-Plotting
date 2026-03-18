@@ -54,7 +54,7 @@ def lighten_color(hex_color, factor=0.5):
     )
 
 
-def _normalize_data(plot_data_list, min_x, max_x):
+def normalize_data(plot_data_list, min_x, max_x):
     """Shift each channel's data so the minimum in the x-range is zero.
 
     Args:
@@ -167,7 +167,7 @@ def create_overlay_plot(all_sample_data, ax_names=None, plot_fracs=False, rotate
             color = col_main if j == 0 else lighten_color(col_main)
             dash = "solid" if j == 0 else "dot"
             # Show legend entry for the first channel of each sample
-            legend_name = f"{sample_name}" if j == 0 else f"{sample_name} ({channel_name})"
+            legend_name = sample_name if j == 0 else f"{sample_name} ({channel_name})"
 
             fig.add_trace(go.Scatter(
                 x=pd_df["mL"],
