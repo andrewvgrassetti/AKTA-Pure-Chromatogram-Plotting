@@ -1,8 +1,22 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-.Rdata
-.httr-oauth
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
-.quarto
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
